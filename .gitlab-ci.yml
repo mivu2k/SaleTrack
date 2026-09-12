@@ -1,0 +1,22 @@
+stages:
+  - check
+  - package
+
+default:
+  tags:
+    - windows
+
+check:
+  stage: check
+  script:
+    - dotnet restore SaleTrack.sln
+    - dotnet build SaleTrack.sln -c Release --no-restore
+    - dotnet test SaleTrack.Tests -c Release --no-build
+
+package:
+  stage: package
+  script:
+    - dotnet publish SaleTrack.Web -c Release -o publish/saletrack-student
+  artifacts:
+    paths:
+      - publish/saletrack-student/

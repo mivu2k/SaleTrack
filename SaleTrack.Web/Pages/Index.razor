@@ -1,0 +1,23 @@
+@page "/"
+@inject AccountService Accounts
+
+<h1>Dashboard</h1>
+<p>Simple sale, purchase, serial tracking and account system.</p>
+
+<div class="cards">
+    <div class="card"><b>@summary.Products</b><span>Products</span></div>
+    <div class="card"><b>@summary.AvailableItems</b><span>Available serials</span></div>
+    <div class="card"><b>@summary.SoldItems</b><span>Sold serials</span></div>
+    <div class="card"><b>Rs @summary.PurchaseTotal.ToString("N0")</b><span>Purchases</span></div>
+    <div class="card"><b>Rs @summary.SaleTotal.ToString("N0")</b><span>Sales</span></div>
+    <div class="card"><b>Rs @summary.AccountBalance.ToString("N0")</b><span>Account balance</span></div>
+</div>
+
+@code {
+    private DashboardSummary summary = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        summary = await Accounts.GetSummaryAsync();
+    }
+}

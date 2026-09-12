@@ -1,0 +1,76 @@
+@page "/sales"
+@inject PurchaseService PurchaseData
+@inject SaleService SaleData
+
+<h1>Sales</h1>
+<p>Only serial numbers that are still available appear in this list.</p>
+
+<div class="form-box">
+    <label>Product and serial number</label>
+    <select @bind="stockItemId">
+        <option value="0">Select serial number</option>
+        @foreach (StockItem item in availableItems)
+        {
+            <option value="@item.Id">@item.ProductName - @item.SerialNumber</option>
+        }
+    </select>
+
+    <label>Customer</label>
+    <input @bind="customer" placeholder="Customer name" />
+
+    <label>Sale price</label>
+    <input type="number" @bind="salePrice" />
+
+    <button @onclick="Save">Record sale</button>
+    <p class="message">@message</p>
+</div>
+
+<table>
+    <thead><tr><th>Product</th><th>Serial</th><th>Customer</th><th>Sale price</th><th>Date</th></tr></thead>
+    <tbody>
+        @foreach (SaleRecord sale in sales)
+        {
+            <tr><td>@sale.ProductName</td><td>@sale.SerialNumber</td><td>@sale.Customer</td><td>Rs @sale.SalePrice.ToString("N0")</td><td>@sale.SoldOn.ToShortDateString()</td></tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<StockItem> availableItems = new();
+    private List<SaleRecord> sales = new();
+    private int stockItemId;
+    private string customer = "";
+    private decimal salePrice;
+    private string message = "";
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Save()
+    {
+        if (stockItemId == 0 || string.IsNullOrWhiteSpace(customer) || salePrice <= 0)
+        {
+            message = "Select a serial number and enter the customer and price.";
+            return;
+        }
+
+        try
+        {
+            await SaleData.AddAsync(stockItemId, customer, salePrice);
+            stockItemId = 0;
+            customer = "";
+            salePrice = 0;
+            message = "Sale saved and account credited.";
+            await Load();
+        }
+        catch (Exception ex)
+        {
+            message = $"Could not save: {ex.Message}";
+        }
+    }
+
+    private async Task Load()
+    {
+        availableItems = await PurchaseData.GetAllAsync(true);
+        sales = await SaleData.GetAllAsync();
+    }
+}

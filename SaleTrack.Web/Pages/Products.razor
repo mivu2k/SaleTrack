@@ -1,0 +1,55 @@
+@page "/products"
+@inject ProductService ProductData
+
+<h1>Products</h1>
+
+<div class="form-box">
+    <label>Name</label>
+    <input @bind="name" placeholder="Laptop" />
+
+    <label>Brand</label>
+    <input @bind="brand" placeholder="Dell" />
+
+    <label>Default sale price</label>
+    <input type="number" @bind="salePrice" />
+
+    <button @onclick="Save">Add product</button>
+    <p class="message">@message</p>
+</div>
+
+<table>
+    <thead><tr><th>ID</th><th>Name</th><th>Brand</th><th>Sale price</th></tr></thead>
+    <tbody>
+        @foreach (Product item in products)
+        {
+            <tr><td>@item.Id</td><td>@item.Name</td><td>@item.Brand</td><td>Rs @item.SalePrice.ToString("N0")</td></tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Product> products = new();
+    private string name = "";
+    private string brand = "";
+    private decimal salePrice;
+    private string message = "";
+
+    protected override async Task OnInitializedAsync() => await Load();
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(name) || salePrice <= 0)
+        {
+            message = "Enter a product name and price.";
+            return;
+        }
+
+        await ProductData.AddAsync(name, brand, salePrice);
+        name = brand = "";
+        salePrice = 0;
+        message = "Product added.";
+        await Load();
+    }
+
+    private async Task Load() => products = await ProductData.GetAllAsync();
+}

@@ -1,0 +1,44 @@
+@page "/track"
+@inject PurchaseService PurchaseData
+
+<h1>Track serial number</h1>
+
+<div class="form-box">
+    <label>Serial number</label>
+    <input @bind="serialNumber" placeholder="SN-1001" />
+    <button @onclick="Search">Search</button>
+</div>
+
+@if (searched && item is null)
+{
+    <p class="message">Serial number not found.</p>
+}
+else if (item is not null)
+{
+    <div class="details">
+        <p><b>Product:</b> @item.ProductName</p>
+        <p><b>Serial:</b> @item.SerialNumber</p>
+        <p><b>Purchased from:</b> @item.Supplier on @item.PurchasedOn.ToShortDateString()</p>
+        <p><b>Purchase cost:</b> Rs @item.CostPrice.ToString("N0")</p>
+        <p><b>Status:</b> @(item.IsSold ? "Sold" : "Available")</p>
+        @if (item.IsSold)
+        {
+            <p><b>Sold to:</b> @item.Customer on @(item.SoldOn?.ToShortDateString())</p>
+            <p><b>Sale price:</b> Rs @(item.SoldPrice?.ToString("N0"))</p>
+        }
+    </div>
+}
+
+@code {
+    private string serialNumber = "";
+    private StockItem? item;
+    private bool searched;
+
+    private async Task Search()
+    {
+        searched = true;
+        item = string.IsNullOrWhiteSpace(serialNumber)
+            ? null
+            : await PurchaseData.FindBySerialAsync(serialNumber);
+    }
+}

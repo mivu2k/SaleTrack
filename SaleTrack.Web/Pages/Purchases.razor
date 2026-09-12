@@ -1,0 +1,83 @@
+@page "/purchases"
+@inject ProductService ProductData
+@inject PurchaseService PurchaseData
+
+<h1>Purchases</h1>
+<p>Each purchase adds one physical item with a unique serial number.</p>
+
+<div class="form-box">
+    <label>Product</label>
+    <select @bind="productId">
+        <option value="0">Select product</option>
+        @foreach (Product product in products)
+        {
+            <option value="@product.Id">@product.Name - @product.Brand</option>
+        }
+    </select>
+
+    <label>Serial number</label>
+    <input @bind="serialNumber" placeholder="SN-1001" />
+
+    <label>Supplier</label>
+    <input @bind="supplier" placeholder="Supplier name" />
+
+    <label>Cost price</label>
+    <input type="number" @bind="costPrice" />
+
+    <button @onclick="Save">Record purchase</button>
+    <p class="message">@message</p>
+</div>
+
+<table>
+    <thead><tr><th>Product</th><th>Serial</th><th>Supplier</th><th>Cost</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody>
+        @foreach (StockItem item in purchases)
+        {
+            <tr>
+                <td>@item.ProductName</td><td>@item.SerialNumber</td><td>@item.Supplier</td>
+                <td>Rs @item.CostPrice.ToString("N0")</td><td>@item.PurchasedOn.ToShortDateString()</td>
+                <td>@(item.IsSold ? "Sold" : "Available")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Product> products = new();
+    private List<StockItem> purchases = new();
+    private int productId;
+    private string serialNumber = "";
+    private string supplier = "";
+    private decimal costPrice;
+    private string message = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await ProductData.GetAllAsync();
+        await LoadPurchases();
+    }
+
+    private async Task Save()
+    {
+        if (productId == 0 || string.IsNullOrWhiteSpace(serialNumber) || costPrice <= 0)
+        {
+            message = "Select a product and enter its serial number and cost.";
+            return;
+        }
+
+        try
+        {
+            await PurchaseData.AddAsync(productId, serialNumber, supplier, costPrice);
+            serialNumber = supplier = "";
+            costPrice = 0;
+            message = "Purchase saved and account debited.";
+            await LoadPurchases();
+        }
+        catch (Exception ex)
+        {
+            message = $"Could not save: {ex.Message}";
+        }
+    }
+
+    private async Task LoadPurchases() => purchases = await PurchaseData.GetAllAsync();
+}
